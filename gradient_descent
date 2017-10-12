@@ -1,0 +1,31 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Importing the data
+AutoMpgData = pd.read_csv("https://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data", header=None, delimiter=r"\s+")
+
+# Fetching the relevant columns from the data and storing it as a different dataset
+AutoMpgData2 = AutoMpgData.iloc[:, [0, 2, 5]]
+
+# Normalize the input data
+NormalizedData = (AutoMpgData2 - AutoMpgData2.mean())/AutoMpgData2.std()
+print(NormalizedData)
+
+def gradient_descent(intercept, coefficients, iterations, alpha, theta):
+    """
+    gradient_descent Performs gradient descent to learn theta
+    theta = GRADIENTDESENT(X, y, theta, alpha, num_iters) updates theta by
+    taking num_iters gradient steps with learning rate alpha
+    """
+    cost_history = [0] * iterations
+
+    for iteration in range(iterations):
+        hypothesis = X.dot(theta)
+        loss = hypothesis - y
+        gradient = X.T.dot(loss) / m
+        theta = theta - alpha * gradient
+        # cost = cost_function(X, y, theta)
+        # cost_history[iteration] = cost
+
+    return theta, cost_history
