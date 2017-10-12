@@ -1,4 +1,4 @@
-import pandas as pd
+i#mport pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -12,14 +12,17 @@ AutoMpgData2 = AutoMpgData.iloc[:, [0, 2, 5]]
 NormalizedData = (AutoMpgData2 - AutoMpgData2.mean())/AutoMpgData2.std()
 print(NormalizedData)
 
+# Transform to Numpy arrays for easier matrix math and start theta at 0
+X = np.array(X_df) ##########################
+y = np.array(y_df).flatten() ###################
+theta = np.array([0, 0]
+
 def gradient_descent(intercept, coefficients, iterations, alpha, theta):
     """
     gradient_descent Performs gradient descent to learn theta
     theta = GRADIENTDESENT(X, y, theta, alpha, num_iters) updates theta by
     taking num_iters gradient steps with learning rate alpha
     """
-    cost_history = [0] * iterations
-
     for iteration in range(iterations):
         hypothesis = X.dot(theta)
         loss = hypothesis - y
@@ -28,4 +31,6 @@ def gradient_descent(intercept, coefficients, iterations, alpha, theta):
         # cost = cost_function(X, y, theta)
         # cost_history[iteration] = cost
 
-    return theta, cost_history
+    return theta
+
+(t, c) = gradient_descent(X,y,theta,alpha, iterations)
