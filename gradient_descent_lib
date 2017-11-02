@@ -1,0 +1,34 @@
+# Using np.linalg.lstsq library to calculate the parameters
+
+import numpy as np
+import pandas as pd
+
+
+# To read data from
+def get_data(path):
+    auto_mpg_data = pd.read_csv(path, header=None, delimiter=r"\s+")
+    raw_mpg_data = auto_mpg_data.iloc[:, [0, 2, 5]]
+
+    # Normalize the input data
+    normalized_data = (raw_mpg_data - raw_mpg_data.mean()) / raw_mpg_data.std()
+
+    acceleration = normalized_data.iloc[:, [1]].values  # [ slice_of_rows, slice_of_columns ]
+    displacement = normalized_data.iloc[:, [2]].values  # [ slice_of_rows, slice_of_columns ]
+    mpg = normalized_data.iloc[:, [0]].values
+
+    return acceleration, displacement, mpg, normalized_data
+
+
+acc_val, disp_val, mpg_val, auto_mpg_input = get_data("https://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data")
+
+X_input = auto_mpg_input.iloc[:, [1, 2]]  # Contains acceleration and displacement as part of input
+y_input = auto_mpg_input.iloc[:, [0]]  # Contains mpg as the response
+
+# Using linalg.lstsq to calculate the parameters
+least_square_sol , residual, rank, ss = np.linalg.lstsq(X_input, y_input)
+print("The parameters are : ")
+print("The Least square solutions : ", least_square_sol)
+print("The residual value : ", residual)
+print("The value of rank : ", rank)
+print("Singular values : ", ss)
+
