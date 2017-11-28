@@ -1,0 +1,131 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import style
+style.use("ggplot")
+from mpl_toolkits.mplot3d import Axes3D
+
+df = pd.read_csv("C:/Users/ashis/Downloads/Project2_dataset(1).csv", header=None)
+noramlized_data = (df - df.min()) / (df.max() - df.min())
+ra = 0.5        # 0 < ra < 1; need to test for most effective ra value
+rb = 1.25 * ra  # rb = 1.25*ra; To avoid closely space centers
+n = 599
+eps_u = 0.5
+eps_d = 0.15
+
+
+# Calculating the closest distance from a point to every other point
+# Accepts the initial point(point1) and the set of other points(point2)
+def distance(point1, point2):
+    difference = (point1 - point2) ** 2
+    sum_differences = np.sqrt(np.sum(difference))  # sqrt of sum of differences
+    return sum_differences
+
+
+# Calculate the potential value for each Xi
+# Accepts ra, number of items(n) and the dataset(dataframe)
+def potential_v(radius, n, dataframe):
+    potential = []
+    for i in range(n):
+        pot_val = 0
+        for j in range(n):
+            point1 = np.array(dataframe.ix[i, ])
+            point2 = np.array(dataframe.ix[j, ])
+            rsq = distance(point1, point2)
+            pot_val += np.exp(-((rsq ** 2) / (radius ** 2)))
+        potential.append(pot_val)
+    return potential
+
+
+# Calculate the reduced potential value of the remaining data
+# Accepts previous potential values(potential_values), previous
+# cluster center(cc), number of items(n) and the dataset(dataframe)
+def reduced_potential_value(rb, potential_values, cc, dataframe):
+    potential = []
+    cluster_values = cc[0]
+    max_potential = cluster_values[2]
+    cluster_center = cluster_values[1]
+    cluster_index = cluster_values[0]
+    for i in range(len(potential_values)):
+        point1 = np.array(dataframe.ix[i, ])
+        point2 = np.array(dataframe.ix[cluster_index, ])
+        rsq = distance(point1, point2)
+        pot_val = potential_values[i] - (max_potential * np.exp(-((rsq ** 2) / (rb ** 2))))
+        potential.append(pot_val)
+    return potential
+
+
+# Calculate the cluster points
+# Accepts radius, number of items(n), the dataset(df),
+# epsilon_up(eps_u), epsilon_down(eps_d)
+# sample usage clusters(0.5,600,df1,0.5,0.15)
+def clusters(ra, n, df, eps_u, eps_d):
+    rb = 1.25 * ra
+    potential_values = potential_v(ra, n, df)
+    cc = []
+    df2 = df.values
+    m = max(potential_values)
+    print("Value of max potential : ")
+    print(m)
+    p_i = potential_values.index(m)
+    print("Value of index : ")
+    print(p_i)
+    v_i = df2[p_i]  # reference point
+    print("Value of cluster point : ")
+    print(v_i)
+    cc.append([p_i, v_i, m])
+    cc2 = cc
+    c = 1
+    for i in range(len(potential_values)):
+        reduced_potential = reduced_potential_value(rb, potential_values, cc2, df)
+        #df.replace([df.iloc[p_i, 0], df.iloc[p_i, 1], df.iloc[p_i, 2]], [0, 0, 0], inplace=True)
+        m_k = max(reduced_potential)
+        p_k = reduced_potential.index(m_k)
+        v_k = df2[p_k]  # reference point
+
+        if m_k / m > eps_u:
+            cc.append([p_k, v_k, m_k])
+            cc2 = [[p_k, v_k, m_k]]
+            c += 1
+            #df.replace([df.iloc[p_k, 0], df.iloc[p_k, 1], df.iloc[p_k, 2]], [0, 0, 0], inplace=True)
+
+        if m_k / m < eps_d:
+            break  # exits algorithm
+
+        if eps_d <= m_k / m <= eps_u:
+            d = d_min(df2, cc)
+            if (d / ra) + (m_k / m) >= 1:
+                cc.append([p_k, v_k, m_k])
+                cc2 = [[p_k, v_k, m_k]]
+                c += 1
+                #df.replace([df.iloc[p_k, 0], df.iloc[p_k, 1], df.iloc[p_k, 2]], [0, 0, 0], inplace=True)
+            else:
+                c += 1
+                p_i = max([i for i in reduced_potential if reduced_potential > p_k])
+                p[p_k] = 0
+    return cc
+
+
+# Calculate the shortest distance between Xk*
+# and all the centers already found
+def d_min(new_cc, existing_cc):
+    d = []
+    for cc in existing_cc:
+        d_ = distance(cc[1], new_cc)
+        d.append(d_)
+    return min(d)
+
+
+centroids = clusters(ra, n, noramlized_data, eps_u, eps_d)
+points = noramlized_data.values
+cluster_points = [noramlized_data.iloc[439, :], noramlized_data.iloc[397, :], noramlized_data.iloc[125, :]]
+
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+
+color = (df - np.nanmin(df))/(np.nanmax(df) - np.nanmin(df))
+
+ax.scatter(noramlized_data.iloc[:, 0], noramlized_data.iloc[:, 1], noramlized_data.iloc[:, 2], alpha=0.4, cmap='hot', c=color)
+
+ax.scatter(cluster_points[:, 0], cluster_points[:, 1], cluster_points[:, 2], marker="x", s=150, linewidths=5, zorder=100, c="black")
+plt.show()
