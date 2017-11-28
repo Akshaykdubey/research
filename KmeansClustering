@@ -1,0 +1,48 @@
+import pandas as pd
+import numpy as np
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+from matplotlib import style
+style.use("ggplot")
+from mpl_toolkits.mplot3d import Axes3D
+
+path = "C:/Users/ashis/Downloads/Project2_dataset(1).csv"
+DataFrame = pd.read_csv(path, header=None, delimiter=r",")
+
+noramlized_data = (DataFrame - DataFrame.min()) / (DataFrame.max() - DataFrame.min())
+
+k = 3
+
+# Create a k-means model on our data, using k clusters.
+# Random_state helps ensure that the algorithm returns the
+# same results each time.
+kmeans_model = KMeans(n_clusters=k, random_state=1)
+kmeans_model.fit(noramlized_data)
+
+# These are our fitted labels for clusters --
+# The first cluster has label 0, and the second has label 1.
+labels = kmeans_model.labels_
+
+centroids = kmeans_model.cluster_centers_
+print("The value of centroids : ")
+print(centroids)
+
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+X = np.array(DataFrame)
+
+color = (DataFrame - np.nanmin(DataFrame))/(np.nanmax(DataFrame) - np.nanmin(DataFrame))
+
+ax.scatter(noramlized_data.iloc[:, 0], noramlized_data.iloc[:, 1], noramlized_data.iloc[:, 2], alpha=0.3, cmap='hot', c=color)
+
+ax.scatter(centroids[:, 0], centroids[:, 1], centroids[:, 2], marker="x", alpha=1, s=150, linewidths=5, zorder=100, c="black")
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+plt.title('3-D projection of clustering obtained from K-means Clustering Algorithm')
+plt.show()
+
+
+
+
+
