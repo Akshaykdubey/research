@@ -1,0 +1,116 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+
+
+def hamming_distance(n, f, m, c):
+    val = 0
+    for i in range(n):
+        val += np.abs(f[i] - m[c, i])
+    return val
+
+
+def error_function(n, num, fi, m, c):
+    error1 = 0
+    error = 0
+    for j in range(n):
+        for i in range(num):
+            error += np.abs(fi[j] - m[c, j])
+        error1 += error/num
+    error_val = error1/n
+    return error_val
+
+
+# ======================= training code ======================= #
+def training(num_of_training_samples, max_iter, w, M, x_train, y_train):
+    iteration = 0
+    prediction_f = []
+    hamming_error = []
+    total_error = []
+    while iteration < max_iter:
+        iteration += 1
+        for j in range(num_of_training_samples):
+            prediction_f = []
+            z = np.dot(x_train[j], w)
+            C = y_train[j]  # keep the true class-label of j’th training sample in a variable called  𝐶
+            for iter1 in range(len(z)):
+                sigmoid_qi = 1/(1 + np.exp(-z[iter1]))  # Implemented sigmoid function; 0 < sigmoid_qi < 1
+                if sigmoid_qi < threshold:
+                    prediction_f.append(0)
+                else:
+                    prediction_f.append(1)
+                # Select the 𝐶∗’th row of M matrix ( let’s show it with  M(𝐶∗, :) ) and do the followings :
+                w_delta = np.dot(0.005 * np.abs(prediction_f[iter1] - M[C, iter1]) * (0.5 - sigmoid_qi) * (sigmoid_qi - sigmoid_qi**2),
+                                 [x_train[j]])
+                print(w_delta)
+                w[:, iter1] += w_delta  # updating the value of w
+            hamming_error.append(hamming_distance(n, prediction_f, M, C))
+        print(hamming_error)
+        total_error.append(error_function(n, num_of_training_samples, prediction_f, M, C))
+    return total_error, iteration
+
+
+# ============================testing code============================== #
+def testing(num_of_test_samples, max_iter, w, M, x_test, y_test):
+    predictive_class = []
+    for t in range(num_of_test_samples):
+        hamming_error = []
+        prediction_f = []
+        z_test = np.dot(x_test[t], w)
+        c_test = y_test[t]  # keep the true class-label of j’th test sample in a variable called c_test
+        for iter1 in range(len(z_test)):
+            sigmoid_qi = 1 / (1 + np.exp(-z_test[iter1]))  # Implemented sigmoid function; 0 < sigmoid_qi < 1
+            if sigmoid_qi < threshold:
+                prediction_f.append(0)
+            else:
+                prediction_f.append(1)
+        for m_iter in range(len(M)):
+            m_temp = M[m_iter]
+            val = 0
+            for i in range(n):
+                val += np.abs(prediction_f[i] - m_temp[i])
+            hamming_error.append(val)
+        predictive_class.append(hamming_error.index(min(hamming_error)))
+    return predictive_class
+
+
+# ======================= Initializing the code ======================== #
+dataset = pd.read_csv("C:/Users/ashis/Desktop/ecoli1.csv", header=None)
+dataset = dataset.drop(0, 1)  # Removing the first column in the dataset
+dataset[8].replace(['cp', 'im', 'imS', 'imL', 'imU', 'om', 'omL', 'pp'], [0, 1, 2, 3, 4, 5, 6, 7], inplace=True)
+input_data = dataset.iloc[:, 0:7]
+output_data = dataset.iloc[:, 7:8]
+C = 8  # 'C' refers to the number of class labels
+n = 12  # 'n' refers to the number of bits
+np.random.seed(1)
+M = np.random.choice([0, 1], size=(C, n))  # 'M' is the matrix(8, 12) with random values of '0' and '1'
+w = np.random.uniform(low=-1, high=1, size=(7, n))  # 'w' is the weighted matrix(7, n) having values between -1 and 1
+err = 0.1
+max_iter = 10
+
+# -------------------------------use tanh or sigmoid-------------------------- #
+# using sigmoid as of now
+# normalize the data to have values of input between 0 and 1
+normalize = (input_data - input_data.min())/(input_data.max() - input_data.min())
+
+# splitting training and testing data : 80% and 20%
+x_train, x_test, y_train, y_test = train_test_split(input_data, output_data, test_size=0.2)
+num_of_training_samples = len(x_train)
+num_of_test_samples = len(x_test)
+x_train = np.array(x_train)
+x_test = np.array(x_test)
+y_train = np.array(y_train)
+y_test = np.array(y_test)
+threshold = 0.5
+error, iteration = training(num_of_test_samples, max_iter, w, M, x_train, y_train)
+print(error)
+
+predicted_class = testing(num_of_test_samples, max_iter, w, M, x_test, y_test)
+# training_confusion_matrix = confusion_matrix()
+test_confusion_matrix = confusion_matrix(y_test, predicted_class)
+print(test_confusion_matrix)
+# Plot the graph between the total_error and iterations
+plt.plot(np.arange(iteration), error)
+plt.show()
